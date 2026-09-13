@@ -4,7 +4,7 @@ AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di 
 
 ## Fitur
 
-- Seleksi border/frame terluar setiap lembar.
+- Seleksi border/frame terluar setiap lembar dari ruang aktif Model atau Layout.
 - Urutan otomatis kiri ke kanan.
 - Plotter otomatis `DWG To PDF.pc3`.
 - Default `ISO full bleed A4` dan Portrait.
@@ -15,11 +15,11 @@ AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di 
 
 ## Penggunaan
 
-1. Simpan DWG terlebih dahulu dan buka tab Model.
+1. Simpan DWG terlebih dahulu dan buka tab Model atau Layout yang berisi frame.
 2. Ketik `APPLOAD`, lalu muat `LISP AutoCAD/BatchPlotModelToPDF/BatchPlotModelToPDF.lsp`.
 3. Pastikan command line menampilkan versi yang termuat.
 4. Jalankan `BPP` (atau `BATCHPLOTPDF`).
-5. Pilih polyline tertutup atau block border untuk setiap lembar, lalu tekan Enter.
+5. Pilih polyline tertutup atau block border pada ruang aktif untuk setiap lembar, lalu tekan Enter.
 6. Tekan Enter pada pilihan A4 dan Portrait untuk memakai default.
 7. Tentukan nama file PDF.
 

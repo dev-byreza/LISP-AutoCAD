@@ -1,6 +1,6 @@
 ;;; ------------------------------------------------------------------------
 ;;; BatchPlotModelToPDF.lsp
-;;; Version: 2.7
+;;; Version: 2.8
 ;;; Command: BATCHPLOTPDF
 ;;;
 ;;; Creates one multi-sheet PDF from window plots in Model Space.  A temporary
@@ -295,7 +295,7 @@
   (setq BP:stage "mengatur Shade plot ke Legacy wireframe")
   (BP:set-legacy-wireframe layout))
 
-(defun BP:write-dsd (filename drawing layouts pdf / file sheet-number layout name outdir)
+(defun BP:write-dsd (filename drawing layouts pdf sheet-layout-name / file sheet-number layout name outdir)
   (setq outdir (vl-filename-directory pdf)
         file (open filename "w"))
   (foreach line
@@ -308,7 +308,7 @@
     (foreach line
       (list (strcat "[DWF6Sheet:" (vl-filename-base drawing) "-" name "]")
             (strcat "DWG=" drawing)
-            "Layout=Model"
+            (strcat "Layout=" sheet-layout-name)
             (strcat "Setup=" name "|" drawing)
             (strcat "OriginalSheetPath=" drawing)
             "Has Plot Port=0"
@@ -370,11 +370,19 @@
 (defun c:BATCHPLOTPDF
        (/ *error* acad document old-layout saved-vars selection frames
           plotter probe probe-name media media-list styles orientation output dsd
-          layouts counter layout-name layout model-backup model-backup-name publish-saved)
+          layouts counter layout-name layout model-backup model-backup-name publish-saved
+          model-layout source-layout source-layout-name source-model-type initial-tilemode)
   (vl-load-com)
   (setq acad (vlax-get-acad-object)
         document (vla-get-ActiveDocument acad)
         old-layout (vla-get-ActiveLayout document)
+        model-layout (vla-get-Layout (vla-get-ModelSpace document))
+        initial-tilemode (getvar "TILEMODE")
+        source-layout (if (= initial-tilemode 1) model-layout old-layout)
+        source-layout-name (if (= initial-tilemode 1)
+                             "Model"
+                             (vla-get-Name old-layout))
+        source-model-type (= initial-tilemode 1)
         saved-vars (list (cons "CMDECHO" (getvar "CMDECHO"))
                          (cons "FILEDIA" (getvar "FILEDIA"))
                          (cons "BACKGROUNDPLOT" (getvar "BACKGROUNDPLOT"))
@@ -394,8 +402,9 @@
     ;; while the Model layout was being used as the configuration template.
     (if model-backup
       (progn
-        (vl-catch-all-apply 'vla-CopyFrom (list old-layout model-backup))
+        (vl-catch-all-apply 'vla-CopyFrom (list source-layout model-backup))
         (vl-catch-all-apply 'vla-Delete (list model-backup))))
+    (if (= initial-tilemode 0) (setvar "TILEMODE" 0))
     (BP:delete-layouts document layouts old-layout)
     (if publish-saved
       (vl-catch-all-apply 'vla-Save (list document)))
@@ -404,8 +413,6 @@
     (vl-catch-all-apply 'vla-EndUndoMark (list document))
     (princ))
   (cond
-    ((/= (getvar "TILEMODE") 1)
-      (alert "Jalankan BATCHPLOTPDF dari tab Model (Model Space), bukan Layout."))
     ((= (getvar "DWGTITLED") 0)
       (alert "Simpan drawing terlebih dahulu. PUBLISH membutuhkan file DWG yang sudah tersimpan."))
     ((= (getvar "PSTYLEMODE") 0)
@@ -413,7 +420,7 @@
     (T
       (vla-StartUndoMark document)
       (setq BP:stage nil)
-      (princ "\nPilih satu border/frame TERLUAR untuk setiap lembar, lalu Enter: ")
+      (princ "\nPilih satu border/frame TERLUAR pada ruang aktif untuk setiap lembar, lalu Enter: ")
       (setq selection (ssget))
       (if (null selection)
         (princ "\nTidak ada frame yang dipilih.")
@@ -422,7 +429,7 @@
           (if (null frames)
             (alert "Tidak ada frame dengan bounding box yang valid.")
             (progn
-              (setq plotter (BP:default-pdf-plotter old-layout))
+              (setq plotter (BP:default-pdf-plotter source-layout))
               (if (null plotter)
                 (alert "Plotter DWG To PDF.pc3 tidak ditemukan. Pastikan PDF PC3 bawaan AutoCAD tersedia.")
                 (progn
@@ -432,8 +439,9 @@
                                                    "BP_PLOT_PROBE_")
                         ;; Read media using a Model-space configuration.
                         probe (vla-Add (vla-get-PlotConfigurations document)
-                                       probe-name :vlax-true))
-                  (vla-CopyFrom probe old-layout)
+                                       probe-name
+                                       (if source-model-type :vlax-true :vlax-false)))
+                  (vla-CopyFrom probe source-layout)
                   (vla-put-ConfigName probe plotter)
                   (vla-RefreshPlotDeviceInfo probe)
                   (setq media-list (BP:variant-list (vla-GetCanonicalMediaNames probe))
@@ -481,23 +489,25 @@
                                                 "BP_MODEL_BACKUP_")
                                     model-backup
                                 (vla-Add (vla-get-PlotConfigurations document)
-                                         model-backup-name :vlax-true))
-                              (vla-CopyFrom model-backup old-layout)
+                                         model-backup-name
+                                         (if source-model-type :vlax-true :vlax-false)))
+                              (vla-CopyFrom model-backup source-layout)
                               (setq counter 1)
                               (foreach frame frames
                                 ;; Configure the actual Model layout first; this is
                                 ;; the same target used by AutoCAD's Plot dialog.
-                                (BP:configure-layout old-layout plotter media orientation frame)
+                                (BP:configure-layout source-layout plotter media orientation frame)
                                 (setq BP:stage "membuat temporary Model-space page setup")
                                 (setq layout-name
                                   (BP:unique-name (vla-get-PlotConfigurations document)
                                                   (strcat "BP_PDF_SETUP_" (itoa counter) "_"))
                                       layout (vla-Add (vla-get-PlotConfigurations document)
-                                                      layout-name :vlax-true))
+                                                      layout-name
+                                                      (if source-model-type :vlax-true :vlax-false)))
                                 (setq layouts (append layouts (list layout))
                                       counter (1+ counter))
                                 (setq BP:stage "menyalin setup Model ke sheet sementara")
-                                (vla-CopyFrom layout old-layout)
+                                (vla-CopyFrom layout source-layout)
                                 ;; CopyFrom may replace the plot-settings name.
                                 ;; DSD must refer to the unique name assigned here.
                                 (vla-put-Name layout layout-name)
@@ -505,7 +515,7 @@
                               ;; Restore the user's original Model plot settings
                               ;; before publishing the copied named page setups.
                               (setq BP:stage "memulihkan page setup Model asli")
-                              (vla-CopyFrom old-layout model-backup)
+                              (vla-CopyFrom source-layout model-backup)
                               (vla-Delete model-backup)
                               (setq model-backup nil)
                               (vla-Regen document 1)
@@ -517,7 +527,7 @@
                                         (vl-filename-base output) "_BPPLOT_TEMP.dsd"))
                               (BP:write-dsd dsd
                                             (strcat (getvar "DWGPREFIX") (getvar "DWGNAME"))
-                                            layouts output)
+                                            layouts output source-layout-name)
                               (setvar "CMDECHO" 0)
                               (setvar "FILEDIA" 0)
                               (setvar "BACKGROUNDPLOT" 0)
@@ -530,6 +540,7 @@
                               ;; page setup. Type=6 creates one multi-sheet PDF.
                               (setq BP:stage "menjalankan Publish multi-sheet PDF")
                               (vl-cmdf "_.-PUBLISH" dsd)
+                              (if (= initial-tilemode 0) (setvar "TILEMODE" 0))
                               (BP:delete-layouts document layouts old-layout)
                               (setq layouts nil)
                               (setq BP:stage "menyimpan DWG setelah membersihkan page setup sementara")
@@ -549,5 +560,5 @@
 (defun c:BPP ()
   (c:BATCHPLOTPDF))
 
-(princ "\nBatchPlotModelToPDF v2.7 loaded. Automatic DWG save for Publish. Default: DWG To PDF.pc3, ISO full bleed A4, Portrait. Commands: BATCHPLOTPDF atau BPP")
+(princ "\nBatchPlotModelToPDF v2.9 loaded. Uses the active Model or Layout space; automatic DWG save. Default: DWG To PDF.pc3, ISO full bleed A4, Portrait. Commands: BATCHPLOTPDF atau BPP")
 (princ)
