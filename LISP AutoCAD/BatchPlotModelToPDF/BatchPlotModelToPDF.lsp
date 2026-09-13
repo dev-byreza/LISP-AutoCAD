@@ -1,6 +1,7 @@
 ;;; ------------------------------------------------------------------------
 ;;; BatchPlotModelToPDF.lsp
-;;; Version: 2.9
+;;; Version: V1.0
+;;; Owner: RCAD Tutor
 ;;; Command: BATCHPLOTPDF
 ;;;
 ;;; Creates one multi-sheet PDF from window plots in Model Space.  A temporary
@@ -560,5 +561,5 @@
 (defun c:BPP ()
   (c:BATCHPLOTPDF))
 
-(princ "\nBatchPlotModelToPDF v2.9 loaded. Uses the active Model or Layout space; automatic DWG save. Default: DWG To PDF.pc3, ISO full bleed A4, Portrait. Commands: BATCHPLOTPDF atau BPP")
+(princ "\nBatchPlotModelToPDF V1.0 loaded. Owner: RCAD Tutor. Uses active Model or Layout; default DWG To PDF.pc3, A4 Portrait. Commands: BATCHPLOTPDF atau BPP")
 (princ)

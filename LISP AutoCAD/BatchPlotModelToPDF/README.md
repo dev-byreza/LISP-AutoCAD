@@ -2,6 +2,9 @@
 
 AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di Model Space.
 
+**Owner:** RCAD Tutor  
+**Release:** V1.0
+
 ## Fitur
 
 - Seleksi border/frame terluar setiap lembar dari ruang aktif Model atau Layout.
