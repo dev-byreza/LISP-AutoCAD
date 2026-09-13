@@ -16,7 +16,7 @@ AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di 
 ## Penggunaan
 
 1. Simpan DWG terlebih dahulu dan buka tab Model.
-2. Ketik `APPLOAD`, lalu muat `BatchPlotModelToPDF.lsp`.
+2. Ketik `APPLOAD`, lalu muat `LISP AutoCAD/BatchPlotModelToPDF/BatchPlotModelToPDF.lsp`.
 3. Pastikan command line menampilkan versi yang termuat.
 4. Jalankan `BPP` (atau `BATCHPLOTPDF`).
 5. Pilih polyline tertutup atau block border untuk setiap lembar, lalu tekan Enter.
