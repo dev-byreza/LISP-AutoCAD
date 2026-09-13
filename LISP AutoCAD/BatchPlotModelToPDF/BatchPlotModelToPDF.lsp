@@ -1,6 +1,6 @@
 ;;; ------------------------------------------------------------------------
 ;;; BatchPlotModelToPDF.lsp
-;;; Version: 2.8
+;;; Version: 2.9
 ;;; Command: BATCHPLOTPDF
 ;;;
 ;;; Creates one multi-sheet PDF from window plots in Model Space.  A temporary
