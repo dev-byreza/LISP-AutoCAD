@@ -1,5 +1,9 @@
 # BatchPlotModelToPDF
 
+<p align="center">
+  <img src="https://drive.google.com/uc?export=view&id=1R6Bns8AOvKGHF1gFVzqHIuJGcPvUnYSh" alt="RCAD Tutor" width="360">
+</p>
+
 AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di Model Space.
 
 **Owner:** RCAD Tutor  
