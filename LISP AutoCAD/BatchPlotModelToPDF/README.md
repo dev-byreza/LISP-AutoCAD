@@ -5,7 +5,7 @@ AutoLISP untuk AutoCAD yang membuat satu PDF multi-sheet dari beberapa frame di 
 **Owner:** RCAD Tutor  
 **Release:** V1.0
 
-![RCAD Tutor](19_RCAD_Tutor_Watermark_Navy.png)
+RCAD Tutor — AutoCAD LISP collection
 
 ## Fitur
 
